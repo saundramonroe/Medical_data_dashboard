@@ -1,9 +1,10 @@
 {
     "version": "0.2.0",
     "configurations": [
+        
         {
             "name": "Python: Current File",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
@@ -11,7 +12,7 @@
         },
         {
             "name": "Python: Jupyter Kernel",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "module": "jupyter",
             "args": ["lab"],
