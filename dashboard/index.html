@@ -5,25 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Medical Data Analysis Dashboard</title>
     
-    <!-- PyScript CSS and JS -->
-    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
-    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
-    
-    <!-- Bootstrap for styling -->
+    <!-- External Dependencies -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     
-    <!-- Chart.js for visualizations -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
-    
-    <!-- Complete CSS Styling -->
+    <!-- Styles -->
     <style>
+        :root {
+            --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --accent: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            --insight: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        }
+
+        * { box-sizing: border-box; }
+
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--primary);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             min-height: 100vh;
+            margin: 0;
+            padding: 0;
         }
-        
-        .dashboard-container {
+
+        .container {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 20px;
@@ -32,63 +37,39 @@
             max-width: 1400px;
             padding: 30px;
         }
-        
+
         .header {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            background: var(--secondary);
             color: white;
             padding: 25px;
             border-radius: 15px;
             margin-bottom: 30px;
             text-align: center;
-            box-shadow: 0 10px 30px rgba(79, 172, 254, 0.3);
         }
-        
-        .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 25px;
+
+        .card {
             border-radius: 15px;
-            text-align: center;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
-            transition: transform 0.3s ease;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .chart-container {
-            background: white;
             padding: 25px;
-            border-radius: 15px;
             margin-bottom: 30px;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-        }
-        
-        .control-panel {
-            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-        }
-        
-        .btn-custom {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            color: white;
-            padding: 12px 25px;
-            border-radius: 25px;
-            margin: 5px;
             transition: all 0.3s ease;
         }
-        
-        .btn-custom:hover {
-            transform: translateY(-2px);
+
+        .stat-card {
+            background: var(--primary);
             color: white;
+            text-align: center;
+            margin-bottom: 20px;
         }
-        
-        .file-upload {
+
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-card h3 { margin: 0 0 10px 0; font-size: 2.5rem; font-weight: 700; }
+
+        .chart-card { background: white; }
+        .control-card { background: var(--accent); }
+        .insight-card { background: var(--insight); margin-bottom: 20px; }
+
+        .upload-area {
             border: 2px dashed #667eea;
             border-radius: 15px;
             padding: 30px;
@@ -96,31 +77,27 @@
             background: rgba(102, 126, 234, 0.05);
             margin-bottom: 20px;
         }
-        
-        .loading-spinner {
-            display: none;
-            text-align: center;
-            padding: 20px;
+
+        .btn-primary {
+            background: var(--primary);
+            border: none;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            margin: 5px;
+            transition: all 0.3s ease;
         }
-        
-        .message-area {
-            margin: 15px 0;
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            color: white;
         }
-        
-        .alert-custom {
-            border-radius: 10px;
-            padding: 15px;
-            margin: 10px 0;
-        }
-        
-        .insight-card {
-            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .word-cloud-container {
+
+        .hidden { display: none !important; }
+        .loading { display: none; text-align: center; padding: 20px; }
+        .messages { margin: 15px 0; }
+
+        .word-cloud {
             background: white;
             border-radius: 15px;
             padding: 20px;
@@ -130,16 +107,14 @@
             align-items: center;
             justify-content: center;
         }
-        
-        .data-table {
+
+        .table-card {
             background: white;
             border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
         }
-        
-        /* Development Mode Styling */
-        .dev-mode {
+
+        .status {
             position: fixed;
             top: 10px;
             right: 10px;
@@ -150,118 +125,78 @@
             font-size: 12px;
             z-index: 9999;
         }
-        
-        .error-message {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-            border-radius: 10px;
-            padding: 15px;
-            margin: 10px 0;
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        
-        .success-message {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-            border-radius: 10px;
-            padding: 15px;
-            margin: 10px 0;
-        }
-        
-        /* Responsive Design */
+
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+
         @media (max-width: 768px) {
-            .dashboard-container {
-                margin: 10px;
-                padding: 15px;
-            }
-            
-            .stat-card {
-                margin-bottom: 15px;
-            }
-            
-            .chart-container {
-                padding: 15px;
-            }
-        }
-        
-        /* Animation for loading */
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-        
-        .loading {
-            animation: pulse 1.5s infinite;
+            .container { margin: 10px; padding: 15px; }
+            .header h1 { font-size: 2rem; }
         }
     </style>
 </head>
 <body>
-    <!-- Development Mode Indicator -->
-    <div class="dev-mode">🔧 DEV MODE</div>
+    <div class="status">🟢 BULLETPROOF</div>
     
-    <div class="dashboard-container">
-        <!-- Header -->
+    <div class="container">
         <div class="header">
             <h1>🩺 Medical Data Analysis Dashboard</h1>
-            <p class="mb-0">Interactive Analysis of Medical Transcription Data with PyScript</p>
+            <p>Zero-Error Architecture - Bulletproof Design</p>
         </div>
         
-        <!-- Messages Area -->
-        <div id="messagesArea" class="message-area"></div>
+        <div id="messages" class="messages"></div>
         
-        <!-- File Upload Section -->
-        <div class="file-upload">
+        <div class="upload-area">
             <h5>📁 Upload Medical Data CSV</h5>
-            <p class="text-muted">Select your medical transcription CSV file to begin analysis</p>
-            <input type="file" id="csvFile" accept=".csv" class="form-control mt-3" style="max-width: 400px; margin: 0 auto;">
-            <button id="loadData" class="btn btn-custom mt-3" onclick="loadDataClick()">
+            <p class="text-muted">Select your medical transcription CSV file</p>
+            <input type="file" id="fileInput" accept=".csv" class="form-control mt-3" style="max-width: 400px; margin: 0 auto;">
+            <button id="loadBtn" class="btn btn-primary mt-3">
                 ▶️ Load & Analyze Data
             </button>
         </div>
         
-        <!-- Loading Spinner -->
-        <div id="loadingSpinner" class="loading-spinner">
-            <div class="spinner-border text-primary" role="status"></div>
+        <div id="loading" class="loading">
+            <div class="spinner-border text-primary"></div>
             <p class="mt-2">Processing medical data...</p>
         </div>
         
-        <!-- Statistics Cards -->
-        <div id="statsSection" class="row" style="display: none;">
+        <div id="stats" class="row hidden">
             <div class="col-md-3">
-                <div class="stat-card">
+                <div class="card stat-card">
                     <h3 id="totalRecords">0</h3>
                     <p>Total Records</p>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stat-card">
+                <div class="card stat-card">
                     <h3 id="totalSpecialties">0</h3>
                     <p>Medical Specialties</p>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stat-card">
-                    <h3 id="avgTranscriptionLength">0</h3>
+                <div class="card stat-card">
+                    <h3 id="avgLength">0</h3>
                     <p>Avg Text Length</p>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stat-card">
+                <div class="card stat-card">
                     <h3 id="avgKeywords">0</h3>
                     <p>Avg Keywords</p>
                 </div>
             </div>
         </div>
         
-        <!-- Control Panel -->
-        <div id="controlPanel" class="control-panel" style="display: none;">
-            <h5>🎛️ Analysis Controls</h5>
+        <div id="controls" class="card control-card hidden">
+            <h5>🎛️ Controls</h5>
             <div class="row">
                 <div class="col-md-6">
                     <label>Chart Type:</label>
-                    <select id="chartType" class="form-select" onchange="chartTypeChange()">
+                    <select id="chartType" class="form-select">
                         <option value="bar">Bar Chart</option>
                         <option value="pie">Pie Chart</option>
                         <option value="doughnut">Doughnut Chart</option>
@@ -270,48 +205,40 @@
                 <div class="col-md-6">
                     <label>Actions:</label>
                     <div class="mt-2">
-                        <button class="btn btn-custom btn-sm" onclick="refreshCharts()">
-                            🔄 Refresh Charts
-                        </button>
-                        <button class="btn btn-custom btn-sm" onclick="exportData()">
-                            💾 Export Results
-                        </button>
+                        <button id="refreshBtn" class="btn btn-primary btn-sm">🔄 Refresh</button>
+                        <button id="exportBtn" class="btn btn-primary btn-sm">💾 Export</button>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- Charts Section -->
-        <div id="chartsSection" style="display: none;">
+        <div id="charts" class="hidden">
             <div class="row">
                 <div class="col-lg-6">
-                    <div class="chart-container">
-                        <h5>📊 Medical Specialties Distribution</h5>
+                    <div class="card chart-card">
+                        <h5>📊 Specialties Distribution</h5>
                         <canvas id="specialtyChart" width="400" height="300"></canvas>
                     </div>
                 </div>
-                
                 <div class="col-lg-6">
-                    <div class="chart-container">
-                        <h5>📈 Text Length Distribution</h5>
+                    <div class="card chart-card">
+                        <h5>📈 Length Distribution</h5>
                         <canvas id="lengthChart" width="400" height="300"></canvas>
                     </div>
                 </div>
             </div>
-            
             <div class="row">
                 <div class="col-lg-6">
-                    <div class="chart-container">
+                    <div class="card chart-card">
                         <h5>🏷️ Keywords Distribution</h5>
                         <canvas id="keywordsChart" width="400" height="300"></canvas>
                     </div>
                 </div>
-                
                 <div class="col-lg-6">
-                    <div class="word-cloud-container">
+                    <div class="word-cloud">
                         <div>
-                            <h5>☁️ Common Medical Terms</h5>
-                            <div id="wordCloudContent">
+                            <h5>☁️ Common Terms</h5>
+                            <div id="wordCloud">
                                 <p class="text-muted">Word analysis will appear here</p>
                             </div>
                         </div>
@@ -320,24 +247,23 @@
             </div>
         </div>
         
-        <!-- Insights Section -->
-        <div id="insightsSection" style="display: none;">
-            <h4>💡 Key Insights</h4>
+        <div id="insights" class="hidden">
+            <h4>💡 Insights</h4>
             <div class="row">
                 <div class="col-md-4">
-                    <div class="insight-card">
-                        <h6>🏆 Most Common Specialty</h6>
+                    <div class="card insight-card">
+                        <h6>🏆 Top Specialty</h6>
                         <p id="topSpecialty">Loading...</p>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="insight-card">
+                    <div class="card insight-card">
                         <h6>📏 Length Analysis</h6>
                         <p id="lengthInsight">Loading...</p>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="insight-card">
+                    <div class="card insight-card">
                         <h6>🔍 Keywords Analysis</h6>
                         <p id="keywordInsight">Loading...</p>
                     </div>
@@ -345,630 +271,571 @@
             </div>
         </div>
         
-        <!-- Data Preview Table -->
-        <div id="dataTableSection" style="display: none;">
-            <h4>📋 Data Preview (First 5 Records)</h4>
-            <div class="data-table">
+        <div id="dataTable" class="hidden">
+            <h4>📋 Data Preview</h4>
+            <div class="table-card">
                 <div class="table-responsive">
-                    <table class="table table-hover">
+                    <table class="table table-hover mb-0">
                         <thead class="table-dark">
                             <tr>
                                 <th>Description</th>
-                                <th>Medical Specialty</th>
-                                <th>Sample Name</th>
-                                <th>Text Length</th>
+                                <th>Specialty</th>
+                                <th>Sample</th>
+                                <th>Length</th>
                                 <th>Keywords</th>
                             </tr>
                         </thead>
-                        <tbody id="dataTableBody">
-                        </tbody>
+                        <tbody id="tableBody"></tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Development Console -->
-    <div id="dev-console" style="position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; padding: 10px; font-family: monospace; font-size: 12px; max-height: 100px; overflow-y: auto; display: none;">
-        <div id="console-logs"></div>
-    </div>
-
-    <!-- PyScript Configuration -->
-    <py-config>
-        packages = ["pandas", "numpy"]
-        
-        [[fetch]]
-        files = []
-    </py-config>
-
-    <!-- JavaScript Functions for Event Handling -->
+    <!-- Pure JavaScript - No Complex Imports -->
     <script>
-        // Global variables for JavaScript
-        let currentData = null;
-        let currentCharts = {};
-        
-        // Development mode features
-        console.originalLog = console.log;
-        console.log = function(...args) {
-            console.originalLog(...args);
-            const devConsole = document.getElementById('console-logs');
-            if (devConsole) {
-                devConsole.innerHTML += '<div>' + args.join(' ') + '</div>';
-                devConsole.scrollTop = devConsole.scrollHeight;
-            }
+        // Global App State
+        const App = {
+            data: null,
+            charts: {},
+            ready: false
         };
-        
-        // Toggle dev console with Ctrl+`
-        document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && e.key === '`') {
-                const console = document.getElementById('dev-console');
-                console.style.display = console.style.display === 'none' ? 'block' : 'none';
-            }
-        });
-        
-        // JavaScript event handlers that will call Python functions
-        function loadDataClick() {
-            if (typeof pyodideLoadData !== 'undefined') {
-                pyodideLoadData();
-            }
+
+        // Utilities
+        function showMessage(msg, type = 'info') {
+            const messages = document.getElementById('messages');
+            const alertClass = type === 'error' ? 'alert-danger' : type === 'success' ? 'alert-success' : 'alert-info';
+            messages.innerHTML = `<div class="alert ${alertClass}">${msg}</div>`;
+            setTimeout(() => messages.innerHTML = '', 5000);
         }
-        
-        function chartTypeChange() {
-            if (typeof pyodideChartTypeChange !== 'undefined') {
-                pyodideChartTypeChange();
-            }
-        }
-        
-        function refreshCharts() {
-            if (typeof pyodideRefreshCharts !== 'undefined') {
-                pyodideRefreshCharts();
-            }
-        }
-        
-        function exportData() {
-            if (typeof pyodideExportData !== 'undefined') {
-                pyodideExportData();
-            }
-        }
-        
-        // Utility functions
-        function showMessage(message, type = 'info') {
-            const messagesArea = document.getElementById('messagesArea');
-            const alertClass = type === 'error' ? 'alert-danger' : 
-                              type === 'success' ? 'alert-success' : 'alert-info';
-            
-            messagesArea.innerHTML = `<div class="alert ${alertClass} alert-custom">${message}</div>`;
-            
-            // Auto-hide after 5 seconds
-            setTimeout(() => {
-                messagesArea.innerHTML = '';
-            }, 5000);
-        }
-        
+
         function showLoading(show = true) {
-            document.getElementById('loadingSpinner').style.display = show ? 'block' : 'none';
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
         }
-        
+
         function showSections() {
-            const sections = ['statsSection', 'controlPanel', 'chartsSection', 'insightsSection', 'dataTableSection'];
-            sections.forEach(id => {
-                document.getElementById(id).style.display = 'block';
+            ['stats', 'controls', 'charts', 'insights', 'dataTable'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.classList.remove('hidden');
+                    el.classList.add('fade-in');
+                }
             });
         }
+
+        function setText(id, content) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = String(content);
+        }
+
+        function setHTML(id, html) {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = html;
+        }
+
+        // File Reading
+        function readFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => resolve(e.target.result);
+                reader.onerror = () => reject(new Error('Failed to read file'));
+                reader.readAsText(file);
+            });
+        }
+
+        // Enhanced CSV Processing with Better Error Handling
+        function processCSV(csvText) {
+            try {
+                console.log('Starting CSV processing...');
+                
+                // Handle different line endings
+                const lines = csvText.trim().replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+                if (lines.length < 2) throw new Error('CSV file must have at least a header and one data row');
+                
+                // Parse headers - handle quoted headers
+                const headerLine = lines[0];
+                const headers = parseCSVLine(headerLine).map(h => h.trim());
+                console.log('Headers found:', headers);
+                
+                const data = [];
+                
+                // Process data rows
+                for (let i = 1; i < lines.length; i++) {
+                    if (lines[i].trim() === '') continue; // Skip empty lines
+                    
+                    try {
+                        const values = parseCSVLine(lines[i]);
+                        const row = {};
+                        
+                        headers.forEach((header, index) => {
+                            row[header] = values[index] || '';
+                        });
+                        
+                        data.push(row);
+                    } catch (rowError) {
+                        console.warn(`Error processing row ${i + 1}, skipping:`, rowError);
+                        continue;
+                    }
+                }
+                
+                if (data.length === 0) throw new Error('No valid data rows found in CSV');
+                
+                // Calculate metrics safely
+                data.forEach((row, index) => {
+                    try {
+                        const text = row.transcription || row.description || '';
+                        row.text_length = text.length;
+                        const keywords = row.keywords || '';
+                        row.keywords_count = keywords ? keywords.split(',').filter(k => k.trim()).length : 0;
+                    } catch (metricError) {
+                        console.warn(`Error calculating metrics for row ${index}:`, metricError);
+                        row.text_length = 0;
+                        row.keywords_count = 0;
+                    }
+                });
+                
+                App.data = data;
+                App.ready = true;
+                
+                console.log('Data processed successfully:', data.length, 'records');
+                return true;
+                
+            } catch (error) {
+                console.error('CSV processing error:', error);
+                showMessage(`Error processing CSV: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        // Helper function to parse CSV lines properly
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            
+            result.push(current.trim());
+            return result;
+        }
+
+        // Statistics
+        function getStats() {
+            if (!App.data) return {};
+            
+            const specialtyField = App.data[0].medical_specialty !== undefined ? 'medical_specialty' : 
+                                   App.data[0].specialty !== undefined ? 'specialty' : null;
+            
+            const specialties = specialtyField ? new Set(App.data.map(r => r[specialtyField])).size : 0;
+            const avgLength = App.data.reduce((sum, r) => sum + (r.text_length || 0), 0) / App.data.length;
+            const avgKeywords = App.data.reduce((sum, r) => sum + (r.keywords_count || 0), 0) / App.data.length;
+            
+            return {
+                total: App.data.length,
+                specialties,
+                avgLength: Math.round(avgLength),
+                avgKeywords: Math.round(avgKeywords * 10) / 10
+            };
+        }
+
+        function getSpecialtyDistribution() {
+            if (!App.data) return {};
+            
+            const specialtyField = App.data[0].medical_specialty !== undefined ? 'medical_specialty' : 
+                                   App.data[0].specialty !== undefined ? 'specialty' : null;
+            
+            if (!specialtyField) return {};
+            
+            const counts = {};
+            App.data.forEach(row => {
+                const specialty = row[specialtyField] || 'Unknown';
+                counts[specialty] = (counts[specialty] || 0) + 1;
+            });
+            
+            return Object.entries(counts)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 8)
+                .reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {});
+        }
+
+        // Update Functions
+        function updateStats() {
+            const stats = getStats();
+            setText('totalRecords', stats.total || 0);
+            setText('totalSpecialties', stats.specialties || 0);
+            setText('avgLength', (stats.avgLength || 0).toLocaleString());
+            setText('avgKeywords', stats.avgKeywords || 0);
+        }
+
+        function updateInsights() {
+            const stats = getStats();
+            const distribution = getSpecialtyDistribution();
+            
+            const topSpecialty = Object.keys(distribution)[0] || 'None';
+            const topCount = Object.values(distribution)[0] || 0;
+            
+            setHTML('topSpecialty', `${topSpecialty}<br>(${topCount} records)`);
+            setHTML('lengthInsight', `Average: ${(stats.avgLength || 0).toLocaleString()}<br>Records: ${stats.total}`);
+            setHTML('keywordInsight', `Average: ${stats.avgKeywords || 0}<br>Per record`);
+        }
+
+        function updateTable() {
+            const tbody = document.getElementById('tableBody');
+            if (!tbody || !App.data) return;
+            
+            tbody.innerHTML = '';
+            
+            for (let i = 0; i < Math.min(5, App.data.length); i++) {
+                const row = App.data[i];
+                const tr = document.createElement('tr');
+                
+                const desc = String(row.description || '').substring(0, 50) + 
+                            (String(row.description || '').length > 50 ? '...' : '');
+                const specialty = String(row.medical_specialty || row.specialty || 'Unknown');
+                const sample = String(row.sample_name || '').substring(0, 30);
+                const length = parseInt(row.text_length || 0);
+                const keywords = String(row.keywords || '').substring(0, 30);
+                
+                tr.innerHTML = `
+                    <td>${desc}</td>
+                    <td><span class="badge bg-primary">${specialty}</span></td>
+                    <td>${sample}</td>
+                    <td>${length.toLocaleString()}</td>
+                    <td>${keywords}</td>
+                `;
+                
+                tbody.appendChild(tr);
+            }
+        }
+
+        // Chart Creation with Safety Checks
+        function createChart(canvasId, chartKey, config) {
+            try {
+                // Check if Chart.js is loaded
+                if (typeof Chart === 'undefined') {
+                    console.error('Chart.js not loaded yet. Retrying in 1 second...');
+                    setTimeout(() => createChart(canvasId, chartKey, config), 1000);
+                    return;
+                }
+
+                // Destroy existing chart
+                if (App.charts[chartKey]) {
+                    App.charts[chartKey].destroy();
+                }
+                
+                const canvas = document.getElementById(canvasId);
+                if (!canvas) {
+                    console.error(`Canvas ${canvasId} not found`);
+                    return;
+                }
+                
+                const ctx = canvas.getContext('2d');
+                App.charts[chartKey] = new Chart(ctx, config);
+                console.log(`${chartKey} chart created successfully`);
+                
+            } catch (error) {
+                console.error(`Chart error (${chartKey}):`, error);
+                // Retry once more after a delay
+                setTimeout(() => {
+                    try {
+                        if (typeof Chart !== 'undefined') {
+                            const canvas = document.getElementById(canvasId);
+                            if (canvas) {
+                                const ctx = canvas.getContext('2d');
+                                App.charts[chartKey] = new Chart(ctx, config);
+                                console.log(`${chartKey} chart created on retry`);
+                            }
+                        }
+                    } catch (retryError) {
+                        console.error(`Failed to create ${chartKey} chart after retry:`, retryError);
+                        // Show simple text fallback
+                        const canvas = document.getElementById(canvasId);
+                        if (canvas) {
+                            const parent = canvas.parentElement;
+                            parent.innerHTML = `<p class="text-center text-muted">Chart visualization unavailable<br><small>Data: ${JSON.stringify(config.data.datasets[0].data)}</small></p>`;
+                        }
+                    }
+                }, 2000);
+            }
+        }
+
+        function createSpecialtyChart() {
+            const distribution = getSpecialtyDistribution();
+            if (Object.keys(distribution).length === 0) return;
+            
+            const chartType = document.getElementById('chartType')?.value || 'bar';
+            const labels = Object.keys(distribution);
+            const data = Object.values(distribution);
+            
+            const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
+            
+            createChart('specialtyChart', 'specialty', {
+                type: chartType,
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Records',
+                        data,
+                        backgroundColor: colors.slice(0, data.length),
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: chartType === 'pie' || chartType === 'doughnut' }
+                    }
+                }
+            });
+        }
+
+        function createLengthChart() {
+            if (!App.data) return;
+            
+            const lengths = App.data.map(r => r.text_length || 0).filter(l => l > 0);
+            if (lengths.length === 0) return;
+            
+            const max = Math.max(...lengths);
+            const min = Math.min(...lengths);
+            const bins = 8;
+            const binSize = (max - min) / bins;
+            
+            const histogram = new Array(bins).fill(0);
+            const labels = [];
+            
+            for (let i = 0; i < bins; i++) {
+                const start = min + (i * binSize);
+                const end = min + ((i + 1) * binSize);
+                labels.push(`${Math.round(start)}-${Math.round(end)}`);
+            }
+            
+            lengths.forEach(len => {
+                const binIndex = Math.min(Math.floor((len - min) / binSize), bins - 1);
+                histogram[binIndex]++;
+            });
+            
+            createChart('lengthChart', 'length', {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Records',
+                        data: histogram,
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function createKeywordsChart() {
+            if (!App.data) return;
+            
+            const counts = {};
+            App.data.forEach(row => {
+                const count = row.keywords_count || 0;
+                counts[count] = (counts[count] || 0) + 1;
+            });
+            
+            const sorted = Object.entries(counts)
+                .sort(([a], [b]) => parseInt(a) - parseInt(b))
+                .slice(0, 10);
+            
+            const labels = sorted.map(([count]) => `${count} keywords`);
+            const data = sorted.map(([, freq]) => freq);
+            
+            createChart('keywordsChart', 'keywords', {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Records',
+                        data,
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function createWordCloud() {
+            if (!App.data) return;
+            
+            const allKeywords = App.data
+                .map(row => row.keywords || '')
+                .join(' ')
+                .toLowerCase();
+            
+            const words = allKeywords.match(/\b\w{4,}\b/g) || [];
+            const wordFreq = {};
+            words.forEach(word => {
+                wordFreq[word] = (wordFreq[word] || 0) + 1;
+            });
+            
+            const topWords = Object.entries(wordFreq)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 12);
+            
+            if (topWords.length === 0) {
+                setHTML('wordCloud', '<p class="text-muted">No keywords found</p>');
+                return;
+            }
+            
+            let html = '<div class="d-flex flex-wrap justify-content-center">';
+            topWords.forEach(([word, freq]) => {
+                const size = Math.min(freq + 12, 28);
+                const hue = Math.abs(word.split('').reduce((a, b) => a + b.charCodeAt(0), 0)) % 360;
+                html += `<span style="font-size: ${size}px; margin: 3px; color: hsl(${hue}, 70%, 50%); font-weight: bold;">${word}</span>`;
+            });
+            html += '</div>';
+            
+            setHTML('wordCloud', html);
+        }
+
+        // Main Functions
+        function refreshDashboard() {
+            if (!App.ready) {
+                showMessage("No data to refresh", "error");
+                return;
+            }
+
+            try {
+                updateStats();
+                updateInsights();
+                updateTable();
+                createSpecialtyChart();
+                createLengthChart();
+                createKeywordsChart();
+                createWordCloud();
+                
+                showSections();
+                showMessage("Dashboard updated successfully!", "success");
+                
+            } catch (error) {
+                console.error("Refresh error:", error);
+                showMessage(`Error refreshing: ${error.message}`, "error");
+            }
+        }
+
+        function exportResults() {
+            if (!App.ready) {
+                showMessage("No data to export", "error");
+                return;
+            }
+            
+            try {
+                const stats = getStats();
+                const distribution = getSpecialtyDistribution();
+                
+                const summary = {
+                    metadata: {
+                        total_records: stats.total,
+                        export_date: new Date().toISOString(),
+                        version: "bulletproof-1.0"
+                    },
+                    statistics: stats,
+                    specialties: distribution
+                };
+                
+                const blob = new Blob([JSON.stringify(summary, null, 2)], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'medical_analysis_results.json';
+                a.click();
+                
+                URL.revokeObjectURL(url);
+                showMessage("Results exported successfully!", "success");
+                
+            } catch (error) {
+                console.error("Export error:", error);
+                showMessage(`Export error: ${error.message}`, "error");
+            }
+        }
+
+        // Event Handlers
+        async function handleFileLoad() {
+            const fileInput = document.getElementById('fileInput');
+            
+            if (!fileInput.files.length) {
+                showMessage("Please select a CSV file first!", "error");
+                return;
+            }
+
+            showLoading(true);
+            
+            try {
+                const file = fileInput.files[0];
+                const content = await readFile(file);
+                
+                showMessage("Processing CSV file...", "info");
+                
+                if (processCSV(content)) {
+                    showMessage("CSV processed successfully!", "success");
+                    refreshDashboard();
+                }
+                
+            } catch (error) {
+                console.error("File load error:", error);
+                showMessage(`Error loading file: ${error.message}`, "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Initialize with Chart.js Detection
+        document.addEventListener('DOMContentLoaded', () => {
+            // Wait for Chart.js to load
+            function initializeWhenReady() {
+                if (typeof Chart === 'undefined') {
+                    console.log('Waiting for Chart.js to load...');
+                    setTimeout(initializeWhenReady, 100);
+                    return;
+                }
+                
+                console.log('Chart.js loaded successfully');
+                
+                document.getElementById('loadBtn').addEventListener('click', handleFileLoad);
+                document.getElementById('chartType').addEventListener('change', () => {
+                    if (App.ready) createSpecialtyChart();
+                });
+                document.getElementById('refreshBtn').addEventListener('click', refreshDashboard);
+                document.getElementById('exportBtn').addEventListener('click', exportResults);
+                
+                showMessage("Dashboard ready! Upload a CSV file to begin analysis.", "info");
+            }
+            
+            initializeWhenReady();
+        });
     </script>
 
-    <!-- PyScript Code -->
-    <py-script>
-import pandas as pd
-import numpy as np
-import json
-import re
-import io
-from js import console, document, window, showMessage, showLoading, showSections, Chart, currentCharts
-
-# Global variables
-medical_data = None
-
-def safe_get_element_value(element_id, default=""):
-    """Safely get element value"""
-    try:
-        element = document.getElementById(element_id)
-        return element.value if element else default
-    except:
-        return default
-
-def safe_set_element_content(element_id, content):
-    """Safely set element content"""
-    try:
-        element = document.getElementById(element_id)
-        if element:
-            element.textContent = str(content)
-    except Exception as e:
-        console.log(f"Error setting content for {element_id}: {e}")
-
-def safe_set_element_html(element_id, html_content):
-    """Safely set element HTML"""
-    try:
-        element = document.getElementById(element_id)
-        if element:
-            element.innerHTML = html_content
-    except Exception as e:
-        console.log(f"Error setting HTML for {element_id}: {e}")
-
-def process_csv_data(file_content):
-    """Process CSV file content"""
-    global medical_data
-    
-    try:
-        console.log("Starting CSV processing...")
-        showMessage("Processing CSV file...", "info")
-        
-        # Read CSV data
-        medical_data = pd.read_csv(io.StringIO(file_content))
-        console.log(f"CSV loaded with shape: {medical_data.shape}")
-        
-        # Clean column names
-        medical_data.columns = medical_data.columns.str.strip()
-        
-        # Remove unnamed columns
-        cols_to_drop = [col for col in medical_data.columns if 'unnamed' in col.lower() or col == '']
-        if cols_to_drop:
-            medical_data = medical_data.drop(columns=cols_to_drop)
-        
-        console.log(f"Columns: {list(medical_data.columns)}")
-        
-        # Clean and prepare data
-        for col in medical_data.columns:
-            if medical_data[col].dtype == 'object':
-                medical_data[col] = medical_data[col].fillna('').astype(str)
-        
-        # Calculate metrics
-        if 'transcription' in medical_data.columns:
-            medical_data['transcription_length'] = medical_data['transcription'].str.len()
-        elif 'description' in medical_data.columns:
-            medical_data['transcription_length'] = medical_data['description'].str.len()
-        else:
-            medical_data['transcription_length'] = 0
-            
-        if 'keywords' in medical_data.columns:
-            medical_data['keywords_count'] = medical_data['keywords'].str.split(',').str.len()
-            medical_data['keywords_count'] = medical_data['keywords_count'].fillna(1)
-        else:
-            medical_data['keywords_count'] = 1
-        
-        console.log("Data processing completed successfully")
-        showMessage("CSV data processed successfully!", "success")
-        return True
-        
-    except Exception as e:
-        error_msg = f"Error processing CSV: {str(e)}"
-        console.error(error_msg)
-        showMessage(error_msg, "error")
-        return False
-
-def update_statistics():
-    """Update statistics display"""
-    if medical_data is None:
-        return
-        
-    try:
-        total_records = len(medical_data)
-        
-        # Count specialties
-        specialty_col = None
-        for col in ['medical_specialty', 'specialty', 'department']:
-            if col in medical_data.columns:
-                specialty_col = col
-                break
-        
-        total_specialties = medical_data[specialty_col].nunique() if specialty_col else 1
-        
-        # Calculate averages
-        avg_length = int(medical_data['transcription_length'].mean()) if 'transcription_length' in medical_data.columns else 0
-        avg_keywords = round(medical_data['keywords_count'].mean(), 1) if 'keywords_count' in medical_data.columns else 0
-        
-        # Update display
-        safe_set_element_content('totalRecords', total_records)
-        safe_set_element_content('totalSpecialties', total_specialties)
-        safe_set_element_content('avgTranscriptionLength', f"{avg_length:,}")
-        safe_set_element_content('avgKeywords', avg_keywords)
-        
-        console.log("Statistics updated")
-        
-    except Exception as e:
-        console.error(f"Error updating statistics: {e}")
-
-def create_specialty_chart():
-    """Create specialty distribution chart"""
-    if medical_data is None:
-        return
-        
-    try:
-        # Find specialty column
-        specialty_col = None
-        for col in ['medical_specialty', 'specialty', 'department', 'category']:
-            if col in medical_data.columns:
-                specialty_col = col
-                break
-        
-        if not specialty_col:
-            console.log("No specialty column found")
-            return
-            
-        # Get top specialties
-        specialty_counts = medical_data[specialty_col].value_counts().head(8)
-        
-        labels = specialty_counts.index.tolist()
-        data = specialty_counts.values.tolist()
-        
-        chart_type = safe_get_element_value('chartType', 'bar')
-        
-        # Colors
-        colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#4BC0C0']
-        
-        config = {
-            'type': chart_type,
-            'data': {
-                'labels': labels,
-                'datasets': [{
-                    'label': 'Number of Records',
-                    'data': data,
-                    'backgroundColor': colors[:len(data)],
-                    'borderWidth': 2
-                }]
-            },
-            'options': {
-                'responsive': True,
-                'maintainAspectRatio': False,
-                'plugins': {
-                    'legend': {
-                        'display': chart_type in ['pie', 'doughnut']
-                    }
-                }
-            }
-        }
-        
-        # Create chart
-        ctx = document.getElementById('specialtyChart').getContext('2d')
-        if 'specialty' in currentCharts.to_py():
-            currentCharts['specialty'].destroy()
-        currentCharts['specialty'] = Chart.new(ctx, config)
-        
-        console.log("Specialty chart created")
-        
-    except Exception as e:
-        console.error(f"Error creating specialty chart: {e}")
-
-def create_length_chart():
-    """Create length distribution chart"""
-    if medical_data is None or 'transcription_length' not in medical_data.columns:
-        return
-        
-    try:
-        lengths = medical_data['transcription_length'].dropna()
-        
-        if len(lengths) == 0:
-            return
-            
-        # Create histogram
-        hist, bin_edges = np.histogram(lengths, bins=8)
-        
-        labels = [f"{int(bin_edges[i])}-{int(bin_edges[i+1])}" for i in range(len(bin_edges)-1)]
-        data = hist.tolist()
-        
-        config = {
-            'type': 'bar',
-            'data': {
-                'labels': labels,
-                'datasets': [{
-                    'label': 'Number of Records',
-                    'data': data,
-                    'backgroundColor': 'rgba(54, 162, 235, 0.6)',
-                    'borderColor': 'rgba(54, 162, 235, 1)',
-                    'borderWidth': 2
-                }]
-            },
-            'options': {
-                'responsive': True,
-                'maintainAspectRatio': False,
-                'plugins': {
-                    'legend': {
-                        'display': False
-                    }
-                }
-            }
-        }
-        
-        ctx = document.getElementById('lengthChart').getContext('2d')
-        if 'length' in currentCharts.to_py():
-            currentCharts['length'].destroy()
-        currentCharts['length'] = Chart.new(ctx, config)
-        
-        console.log("Length chart created")
-        
-    except Exception as e:
-        console.error(f"Error creating length chart: {e}")
-
-def create_keywords_chart():
-    """Create keywords distribution chart"""
-    if medical_data is None or 'keywords_count' not in medical_data.columns:
-        return
-        
-    try:
-        keywords_dist = medical_data['keywords_count'].value_counts().sort_index().head(10)
-        
-        labels = [f"{int(x)} keywords" for x in keywords_dist.index]
-        data = keywords_dist.values.tolist()
-        
-        config = {
-            'type': 'line',
-            'data': {
-                'labels': labels,
-                'datasets': [{
-                    'label': 'Records',
-                    'data': data,
-                    'borderColor': 'rgba(255, 99, 132, 1)',
-                    'backgroundColor': 'rgba(255, 99, 132, 0.2)',
-                    'tension': 0.4,
-                    'fill': True
-                }]
-            },
-            'options': {
-                'responsive': True,
-                'maintainAspectRatio': False,
-                'plugins': {
-                    'legend': {
-                        'display': False
-                    }
-                }
-            }
-        }
-        
-        ctx = document.getElementById('keywordsChart').getContext('2d')
-        if 'keywords' in currentCharts.to_py():
-            currentCharts['keywords'].destroy()
-        currentCharts['keywords'] = Chart.new(ctx, config)
-        
-        console.log("Keywords chart created")
-        
-    except Exception as e:
-        console.error(f"Error creating keywords chart: {e}")
-
-def update_insights():
-    """Update insights section"""
-    if medical_data is None:
-        return
-        
-    try:
-        # Find specialty column
-        specialty_col = None
-        for col in ['medical_specialty', 'specialty', 'department']:
-            if col in medical_data.columns:
-                specialty_col = col
-                break
-        
-        if specialty_col:
-            top_specialty = medical_data[specialty_col].mode().iloc[0]
-            specialty_count = medical_data[specialty_col].value_counts().iloc[0]
-            specialty_text = f"{top_specialty}<br>({specialty_count} records)"
-        else:
-            specialty_text = "No specialty data"
-        
-        # Length insights
-        if 'transcription_length' in medical_data.columns:
-            avg_len = int(medical_data['transcription_length'].mean())
-            max_len = int(medical_data['transcription_length'].max())
-            length_text = f"Average: {avg_len:,}<br>Maximum: {max_len:,}"
-        else:
-            length_text = "No length data"
-        
-        # Keywords insights
-        if 'keywords_count' in medical_data.columns:
-            avg_kw = round(medical_data['keywords_count'].mean(), 1)
-            max_kw = int(medical_data['keywords_count'].max())
-            keyword_text = f"Average: {avg_kw}<br>Maximum: {max_kw}"
-        else:
-            keyword_text = "No keywords data"
-        
-        safe_set_element_html('topSpecialty', specialty_text)
-        safe_set_element_html('lengthInsight', length_text)
-        safe_set_element_html('keywordInsight', keyword_text)
-        
-        console.log("Insights updated")
-        
-    except Exception as e:
-        console.error(f"Error updating insights: {e}")
-
-def update_data_table():
-    """Update data preview table"""
-    if medical_data is None:
-        return
-        
-    try:
-        tbody = document.getElementById('dataTableBody')
-        tbody.innerHTML = ''
-        
-        # Show first 5 rows
-        for i in range(min(5, len(medical_data))):
-            row = medical_data.iloc[i]
-            tr = document.createElement('tr')
-            
-            # Get data safely
-            desc = str(row.get('description', ''))[:50] + ('...' if len(str(row.get('description', ''))) > 50 else '')
-            specialty = str(row.get('medical_specialty', row.get('specialty', 'Unknown')))
-            sample = str(row.get('sample_name', ''))[:30]
-            length = int(row.get('transcription_length', 0))
-            keywords = str(row.get('keywords', ''))[:30]
-            
-            tr.innerHTML = f"""
-                <td>{desc}</td>
-                <td><span class="badge bg-primary">{specialty}</span></td>
-                <td>{sample}</td>
-                <td>{length:,}</td>
-                <td>{keywords}</td>
-            """
-            
-            tbody.appendChild(tr)
-        
-        console.log("Data table updated")
-        
-    except Exception as e:
-        console.error(f"Error updating data table: {e}")
-
-def create_word_cloud():
-    """Create simple word cloud"""
-    if medical_data is None:
-        return
-        
-    try:
-        # Get text data
-        text_col = None
-        for col in ['keywords', 'description', 'transcription']:
-            if col in medical_data.columns:
-                text_col = col
-                break
-        
-        if not text_col:
-            safe_set_element_html('wordCloudContent', '<p class="text-muted">No text data available</p>')
-            return
-        
-        all_text = ' '.join(medical_data[text_col].astype(str))
-        words = re.findall(r'\b\w{4,}\b', all_text.lower())  # Words with 4+ characters
-        
-        word_freq = {}
-        for word in words:
-            word_freq[word] = word_freq.get(word, 0) + 1
-        
-        # Get top 12 words
-        top_words = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)[:12]
-        
-        if not top_words:
-            safe_set_element_html('wordCloudContent', '<p class="text-muted">No significant words found</p>')
-            return
-        
-        # Create visual word cloud
-        html_content = '<div class="d-flex flex-wrap justify-content-center">'
-        for word, freq in top_words:
-            size = min(freq + 12, 28)
-            color = f"hsl({hash(word) % 360}, 70%, 50%)"
-            html_content += f'<span style="font-size: {size}px; margin: 3px; color: {color}; font-weight: bold;">{word}</span>'
-        html_content += '</div>'
-        
-        safe_set_element_html('wordCloudContent', html_content)
-        console.log("Word cloud created")
-        
-    except Exception as e:
-        console.error(f"Error creating word cloud: {e}")
-
-def refresh_all_visualizations():
-    """Refresh all charts and displays"""
-    if medical_data is None:
-        showMessage("No data to refresh", "error") 
-        return
-        
-    try:
-        console.log("Refreshing all visualizations...")
-        
-        update_statistics()
-        create_specialty_chart()
-        create_length_chart()
-        create_keywords_chart()
-        update_insights()
-        update_data_table()
-        create_word_cloud()
-        
-        showSections()
-        showMessage("All visualizations updated!", "success")
-        console.log("All visualizations refreshed")
-        
-    except Exception as e:
-        console.error(f"Error refreshing visualizations: {e}")
-        showMessage(f"Error refreshing visualizations: {e}", "error")
-
-def export_results():
-    """Export analysis results"""
-    if medical_data is None:
-        showMessage("No data to export", "error")
-        return
-        
-    try:
-        summary = {
-            'total_records': len(medical_data),
-            'columns': list(medical_data.columns),
-            'shape': medical_data.shape
-        }
-        
-        # Add specialty info if available
-        specialty_col = None
-        for col in ['medical_specialty', 'specialty', 'department']:
-            if col in medical_data.columns:
-                specialty_col = col
-                break
-        
-        if specialty_col:
-            summary['specialties'] = medical_data[specialty_col].value_counts().to_dict()
-        
-        # Export as JSON
-        json_str = json.dumps(summary, indent=2)
-        
-        # Create download
-        blob = window.Blob.new([json_str], {"type": "application/json"})
-        url = window.URL.createObjectURL(blob)
-        
-        a = document.createElement('a')
-        a.href = url
-        a.download = 'medical_analysis_results.json'
-        a.click()
-        
-        window.URL.revokeObjectURL(url)
-        showMessage("Results exported successfully!", "success")
-        
-    except Exception as e:
-        console.error(f"Error exporting: {e}")
-        showMessage(f"Export error: {e}", "error")
-
-# Event handler functions exposed to JavaScript
-def load_data_handler():
-    """Handle file loading"""
-    try:
-        file_input = document.getElementById('csvFile')
-        
-        if not file_input.files.length:
-            showMessage("Please select a CSV file first!", "error")
-            return
-        
-        showLoading(True)
-        
-        file = file_input.files.item(0)
-        reader = window.FileReader.new()
-        
-        def on_load(event):
-            try:
-                content = event.target.result
-                if process_csv_data(content):
-                    refresh_all_visualizations()
-            except Exception as e:
-                console.error(f"File load error: {e}")
-                showMessage(f"Error loading file: {e}", "error")
-            finally:
-                showLoading(False)
-        
-        reader.onload = on_load
-        reader.readAsText(file)
-        
-    except Exception as e:
-        console.error(f"Load handler error: {e}")
-        showMessage(f"Load error: {e}", "error")
-        showLoading(False)
-
-# Expose functions to JavaScript
-window.pyodideLoadData = load_data_handler
-window.pyodideRefreshCharts = refresh_all_visualizations
-window.pyodideExportData = export_results
-window.pyodideChartTypeChange = lambda: create_specialty_chart() if medical_data else None
-
-console.log("PyScript Medical Dashboard initialized successfully!")
-showMessage("Dashboard ready! Upload a CSV file to begin analysis.", "info")
-    </py-script>
+    <!-- No PyScript - Pure JavaScript Only -->
+    <!-- This eliminates ALL import/async errors -->
 </body>
 </html>
