@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Medical Data Analysis Dashboard">
+    <meta name="keywords" content="medical, data, analysis, healthcare">
+    <meta name="author" content="Saundra Monroe">
+    <title>Medical Data Analysis Dashboard</title>
+    
+    <!-- External Dependencies -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <!-- Styles -->
+    <style>
+        :root {
+            --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --accent: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            --insight: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background: var(--primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin: 20px auto;
+            max-width: 1400px;
+            padding: 30px;
+        }
+
+        .header {
+            background: var(--secondary);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .card {
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card {
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-card h3 { margin: 0 0 10px 0; font-size: 2.5rem; font-weight: 700; }
+
+        .chart-card { background: white; }
+        .control-card { background: var(--accent); }
+        .insight-card { background: var(--insight); margin-bottom: 20px; }
+
+        .upload-area {
+            border: 2px dashed #667eea;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            background: rgba(102, 126, 234, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            border: none;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        .hidden { display: none !important; }
+        .loading { display: none; text-align: center; padding: 20px; }
+        .messages { margin: 15px 0; }
+
+        .word-cloud {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .table-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #28a745;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 9999;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+
+        @media (max-width: 768px) {
+            .container { margin: 10px; padding: 15px; }
+            .header h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="status">🟢 BULLETPROOF</div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🩺 Medical Data Analysis Dashboard</h1>
+            <p>Zero-Error Architecture - Bulletproof Design</p>
+        </div>
+        
+        <div id="messages" class="messages"></div>
+        
+        <div class="upload-area">
+            <h5>📁 Upload Medical Data CSV</h5>
+            <p class="text-muted">Select your medical transcription CSV file</p>
+            <input type="file" id="fileInput" accept=".csv" class="form-control mt-3" style="max-width: 400px; margin: 0 auto;">
+            <button id="loadBtn" class="btn btn-primary mt-3">
+                ▶️ Load & Analyze Data
+            </button>
+        </div>
+        
+        <div id="loading" class="loading">
+            <div class="spinner-border text-primary"></div>
+            <p class="mt-2">Processing medical data...</p>
+        </div>
+        
+        <div id="stats" class="row hidden">
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <h3 id="totalRecords">0</h3>
+                    <p>Total Records</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <h3 id="totalSpecialties">0</h3>
+                    <p>Medical Specialties</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <h3 id="avgLength">0</h3>
+                    <p>Avg Text Length</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <h3 id="avgKeywords">0</h3>
+                    <p>Avg Keywords</p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="controls" class="card control-card hidden">
+            <h5>🎛️ Controls</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <label>Chart Type:</label>
+                    <select id="chartType" class="form-select">
+                        <option value="bar">Bar Chart</option>
+                        <option value="pie">Pie Chart</option>
+                        <option value="doughnut">Doughnut Chart</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label>Actions:</label>
+                    <div class="mt-2">
+                        <button id="refreshBtn" class="btn btn-primary btn-sm">🔄 Refresh</button>
+                        <button id="exportBtn" class="btn btn-primary btn-sm">💾 Export</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="charts" class="hidden">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="card chart-card">
+                        <h5>📊 Specialties Distribution</h5>
+                        <canvas id="specialtyChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card chart-card">
+                        <h5>📈 Length Distribution</h5>
+                        <canvas id="lengthChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="card chart-card">
+                        <h5>🏷️ Keywords Distribution</h5>
+                        <canvas id="keywordsChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="word-cloud">
+                        <div>
+                            <h5>☁️ Common Terms</h5>
+                            <div id="wordCloud">
+                                <p class="text-muted">Word analysis will appear here</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="insights" class="hidden">
+            <h4>💡 Insights</h4>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card insight-card">
+                        <h6>🏆 Top Specialty</h6>
+                        <p id="topSpecialty">Loading...</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card insight-card">
+                        <h6>📏 Length Analysis</h6>
+                        <p id="lengthInsight">Loading...</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card insight-card">
+                        <h6>🔍 Keywords Analysis</h6>
+                        <p id="keywordInsight">Loading...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="dataTable" class="hidden">
+            <h4>📋 Data Preview</h4>
+            <div class="table-card">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Description</th>
+                                <th>Specialty</th>
+                                <th>Sample</th>
+                                <th>Length</th>
+                                <th>Keywords</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pure JavaScript - No Complex Imports -->
+    <script>
+        // Global App State
+        const App = {
+            data: null,
+            charts: {},
+            ready: false
+        };
+
+        // Utilities
+        function showMessage(msg, type = 'info') {
+            const messages = document.getElementById('messages');
+            const alertClass = type === 'error' ? 'alert-danger' : type === 'success' ? 'alert-success' : 'alert-info';
+            messages.innerHTML = `<div class="alert ${alertClass}">${msg}</div>`;
+            setTimeout(() => messages.innerHTML = '', 5000);
+        }
+
+        function showLoading(show = true) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function showSections() {
+            ['stats', 'controls', 'charts', 'insights', 'dataTable'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.classList.remove('hidden');
+                    el.classList.add('fade-in');
+                }
+            });
+        }
+
+        function setText(id, content) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = String(content);
+        }
+
+        function setHTML(id, html) {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = html;
+        }
+
+        // File Reading
+        function readFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => resolve(e.target.result);
+                reader.onerror = () => reject(new Error('Failed to read file'));
+                reader.readAsText(file);
+            });
+        }
+
+        // Enhanced CSV Processing with Better Error Handling
+        function processCSV(csvText) {
+            try {
+                console.log('Starting CSV processing...');
+                
+                // Handle different line endings
+                const lines = csvText.trim().replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+                if (lines.length < 2) throw new Error('CSV file must have at least a header and one data row');
+                
+                // Parse headers - handle quoted headers
+                const headerLine = lines[0];
+                const headers = parseCSVLine(headerLine).map(h => h.trim());
+                console.log('Headers found:', headers);
+                
+                const data = [];
+                
+                // Process data rows
+                for (let i = 1; i < lines.length; i++) {
+                    if (lines[i].trim() === '') continue; // Skip empty lines
+                    
+                    try {
+                        const values = parseCSVLine(lines[i]);
+                        const row = {};
+                        
+                        headers.forEach((header, index) => {
+                            row[header] = values[index] || '';
+                        });
+                        
+                        data.push(row);
+                    } catch (rowError) {
+                        console.warn(`Error processing row ${i + 1}, skipping:`, rowError);
+                        continue;
+                    }
+                }
+                
+                if (data.length === 0) throw new Error('No valid data rows found in CSV');
+                
+                // Calculate metrics safely
+                data.forEach((row, index) => {
+                    try {
+                        const text = row.transcription || row.description || '';
+                        row.text_length = text.length;
+                        const keywords = row.keywords || '';
+                        row.keywords_count = keywords ? keywords.split(',').filter(k => k.trim()).length : 0;
+                    } catch (metricError) {
+                        console.warn(`Error calculating metrics for row ${index}:`, metricError);
+                        row.text_length = 0;
+                        row.keywords_count = 0;
+                    }
+                });
+                
+                App.data = data;
+                App.ready = true;
+                
+                console.log('Data processed successfully:', data.length, 'records');
+                return true;
+                
+            } catch (error) {
+                console.error('CSV processing error:', error);
+                showMessage(`Error processing CSV: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        // Helper function to parse CSV lines properly
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            
+            result.push(current.trim());
+            return result;
+        }
+
+        // Statistics
+        function getStats() {
+            if (!App.data) return {};
+            
+            const specialtyField = App.data[0].medical_specialty !== undefined ? 'medical_specialty' : 
+                                   App.data[0].specialty !== undefined ? 'specialty' : null;
+            
+            const specialties = specialtyField ? new Set(App.data.map(r => r[specialtyField])).size : 0;
+            const avgLength = App.data.reduce((sum, r) => sum + (r.text_length || 0), 0) / App.data.length;
+            const avgKeywords = App.data.reduce((sum, r) => sum + (r.keywords_count || 0), 0) / App.data.length;
+            
+            return {
+                total: App.data.length,
+                specialties,
+                avgLength: Math.round(avgLength),
+                avgKeywords: Math.round(avgKeywords * 10) / 10
+            };
+        }
+
+        function getSpecialtyDistribution() {
+            if (!App.data) return {};
+            
+            const specialtyField = App.data[0].medical_specialty !== undefined ? 'medical_specialty' : 
+                                   App.data[0].specialty !== undefined ? 'specialty' : null;
+            
+            if (!specialtyField) return {};
+            
+            const counts = {};
+            App.data.forEach(row => {
+                const specialty = row[specialtyField] || 'Unknown';
+                counts[specialty] = (counts[specialty] || 0) + 1;
+            });
+            
+            return Object.entries(counts)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 8)
+                .reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {});
+        }
+
+        // Update Functions
+        function updateStats() {
+            const stats = getStats();
+            setText('totalRecords', stats.total || 0);
+            setText('totalSpecialties', stats.specialties || 0);
+            setText('avgLength', (stats.avgLength || 0).toLocaleString());
+            setText('avgKeywords', stats.avgKeywords || 0);
+        }
+
+        function updateInsights() {
+            const stats = getStats();
+            const distribution = getSpecialtyDistribution();
+            
+            const topSpecialty = Object.keys(distribution)[0] || 'None';
+            const topCount = Object.values(distribution)[0] || 0;
+            
+            setHTML('topSpecialty', `${topSpecialty}<br>(${topCount} records)`);
+            setHTML('lengthInsight', `Average: ${(stats.avgLength || 0).toLocaleString()}<br>Records: ${stats.total}`);
+            setHTML('keywordInsight', `Average: ${stats.avgKeywords || 0}<br>Per record`);
+        }
+
+        function updateTable() {
+            const tbody = document.getElementById('tableBody');
+            if (!tbody || !App.data) return;
+            
+            tbody.innerHTML = '';
+            
+            for (let i = 0; i < Math.min(5, App.data.length); i++) {
+                const row = App.data[i];
+                const tr = document.createElement('tr');
+                
+                const desc = String(row.description || '').substring(0, 50) + 
+                            (String(row.description || '').length > 50 ? '...' : '');
+                const specialty = String(row.medical_specialty || row.specialty || 'Unknown');
+                const sample = String(row.sample_name || '').substring(0, 30);
+                const length = parseInt(row.text_length || 0);
+                const keywords = String(row.keywords || '').substring(0, 30);
+                
+                tr.innerHTML = `
+                    <td>${desc}</td>
+                    <td><span class="badge bg-primary">${specialty}</span></td>
+                    <td>${sample}</td>
+                    <td>${length.toLocaleString()}</td>
+                    <td>${keywords}</td>
+                `;
+                
+                tbody.appendChild(tr);
+            }
+        }
+
+        // Chart Creation with Safety Checks
+        function createChart(canvasId, chartKey, config) {
+            try {
+                // Check if Chart.js is loaded
+                if (typeof Chart === 'undefined') {
+                    console.error('Chart.js not loaded yet. Retrying in 1 second...');
+                    setTimeout(() => createChart(canvasId, chartKey, config), 1000);
+                    return;
+                }
+
+                // Destroy existing chart
+                if (App.charts[chartKey]) {
+                    App.charts[chartKey].destroy();
+                }
+                
+                const canvas = document.getElementById(canvasId);
+                if (!canvas) {
+                    console.error(`Canvas ${canvasId} not found`);
+                    return;
+                }
+                
+                const ctx = canvas.getContext('2d');
+                App.charts[chartKey] = new Chart(ctx, config);
+                console.log(`${chartKey} chart created successfully`);
+                
+            } catch (error) {
+                console.error(`Chart error (${chartKey}):`, error);
+                // Retry once more after a delay
+                setTimeout(() => {
+                    try {
+                        if (typeof Chart !== 'undefined') {
+                            const canvas = document.getElementById(canvasId);
+                            if (canvas) {
+                                const ctx = canvas.getContext('2d');
+                                App.charts[chartKey] = new Chart(ctx, config);
+                                console.log(`${chartKey} chart created on retry`);
+                            }
+                        }
+                    } catch (retryError) {
+                        console.error(`Failed to create ${chartKey} chart after retry:`, retryError);
+                        // Show simple text fallback
+                        const canvas = document.getElementById(canvasId);
+                        if (canvas) {
+                            const parent = canvas.parentElement;
+                            parent.innerHTML = `<p class="text-center text-muted">Chart visualization unavailable<br><small>Data: ${JSON.stringify(config.data.datasets[0].data)}</small></p>`;
+                        }
+                    }
+                }, 2000);
+            }
+        }
+
+        function createSpecialtyChart() {
+            const distribution = getSpecialtyDistribution();
+            if (Object.keys(distribution).length === 0) return;
+            
+            const chartType = document.getElementById('chartType')?.value || 'bar';
+            const labels = Object.keys(distribution);
+            const data = Object.values(distribution);
+            
+            const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
+            
+            createChart('specialtyChart', 'specialty', {
+                type: chartType,
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Records',
+                        data,
+                        backgroundColor: colors.slice(0, data.length),
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: chartType === 'pie' || chartType === 'doughnut' }
+                    }
+                }
+            });
+        }
+
+        function createLengthChart() {
+            if (!App.data) return;
+            
+            const lengths = App.data.map(r => r.text_length || 0).filter(l => l > 0);
+            if (lengths.length === 0) return;
+            
+            const max = Math.max(...lengths);
+            const min = Math.min(...lengths);
+            const bins = 8;
+            const binSize = (max - min) / bins;
+            
+            const histogram = new Array(bins).fill(0);
+            const labels = [];
+            
+            for (let i = 0; i < bins; i++) {
+                const start = min + (i * binSize);
+                const end = min + ((i + 1) * binSize);
+                labels.push(`${Math.round(start)}-${Math.round(end)}`);
+            }
+            
+            lengths.forEach(len => {
+                const binIndex = Math.min(Math.floor((len - min) / binSize), bins - 1);
+                histogram[binIndex]++;
+            });
+            
+            createChart('lengthChart', 'length', {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Records',
+                        data: histogram,
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function createKeywordsChart() {
+            if (!App.data) return;
+            
+            const counts = {};
+            App.data.forEach(row => {
+                const count = row.keywords_count || 0;
+                counts[count] = (counts[count] || 0) + 1;
+            });
+            
+            const sorted = Object.entries(counts)
+                .sort(([a], [b]) => parseInt(a) - parseInt(b))
+                .slice(0, 10);
+            
+            const labels = sorted.map(([count]) => `${count} keywords`);
+            const data = sorted.map(([, freq]) => freq);
+            
+            createChart('keywordsChart', 'keywords', {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Records',
+                        data,
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function createWordCloud() {
+            if (!App.data) return;
+            
+            const allKeywords = App.data
+                .map(row => row.keywords || '')
+                .join(' ')
+                .toLowerCase();
+            
+            const words = allKeywords.match(/\b\w{4,}\b/g) || [];
+            const wordFreq = {};
+            words.forEach(word => {
+                wordFreq[word] = (wordFreq[word] || 0) + 1;
+            });
+            
+            const topWords = Object.entries(wordFreq)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 12);
+            
+            if (topWords.length === 0) {
+                setHTML('wordCloud', '<p class="text-muted">No keywords found</p>');
+                return;
+            }
+            
+            let html = '<div class="d-flex flex-wrap justify-content-center">';
+            topWords.forEach(([word, freq]) => {
+                const size = Math.min(freq + 12, 28);
+                const hue = Math.abs(word.split('').reduce((a, b) => a + b.charCodeAt(0), 0)) % 360;
+                html += `<span style="font-size: ${size}px; margin: 3px; color: hsl(${hue}, 70%, 50%); font-weight: bold;">${word}</span>`;
+            });
+            html += '</div>';
+            
+            setHTML('wordCloud', html);
+        }
+
+        // Main Functions
+        function refreshDashboard() {
+            if (!App.ready) {
+                showMessage("No data to refresh", "error");
+                return;
+            }
+
+            try {
+                updateStats();
+                updateInsights();
+                updateTable();
+                createSpecialtyChart();
+                createLengthChart();
+                createKeywordsChart();
+                createWordCloud();
+                
+                showSections();
+                showMessage("Dashboard updated successfully!", "success");
+                
+            } catch (error) {
+                console.error("Refresh error:", error);
+                showMessage(`Error refreshing: ${error.message}`, "error");
+            }
+        }
+
+        function exportResults() {
+            if (!App.ready) {
+                showMessage("No data to export", "error");
+                return;
+            }
+            
+            try {
+                const stats = getStats();
+                const distribution = getSpecialtyDistribution();
+                
+                const summary = {
+                    metadata: {
+                        total_records: stats.total,
+                        export_date: new Date().toISOString(),
+                        version: "bulletproof-1.0"
+                    },
+                    statistics: stats,
+                    specialties: distribution
+                };
+                
+                const blob = new Blob([JSON.stringify(summary, null, 2)], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'medical_analysis_results.json';
+                a.click();
+                
+                URL.revokeObjectURL(url);
+                showMessage("Results exported successfully!", "success");
+                
+            } catch (error) {
+                console.error("Export error:", error);
+                showMessage(`Export error: ${error.message}`, "error");
+            }
+        }
+
+        // Event Handlers
+        async function handleFileLoad() {
+            const fileInput = document.getElementById('fileInput');
+            
+            if (!fileInput.files.length) {
+                showMessage("Please select a CSV file first!", "error");
+                return;
+            }
+
+            showLoading(true);
+            
+            try {
+                const file = fileInput.files[0];
+                const content = await readFile(file);
+                
+                showMessage("Processing CSV file...", "info");
+                
+                if (processCSV(content)) {
+                    showMessage("CSV processed successfully!", "success");
+                    refreshDashboard();
+                }
+                
+            } catch (error) {
+                console.error("File load error:", error);
+                showMessage(`Error loading file: ${error.message}`, "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Initialize with Chart.js Detection
+        document.addEventListener('DOMContentLoaded', () => {
+            // Wait for Chart.js to load
+            function initializeWhenReady() {
+                if (typeof Chart === 'undefined') {
+                    console.log('Waiting for Chart.js to load...');
+                    setTimeout(initializeWhenReady, 100);
+                    return;
+                }
+                
+                console.log('Chart.js loaded successfully');
+                
+                document.getElementById('loadBtn').addEventListener('click', handleFileLoad);
+                document.getElementById('chartType').addEventListener('change', () => {
+                    if (App.ready) createSpecialtyChart();
+                });
+                document.getElementById('refreshBtn').addEventListener('click', refreshDashboard);
+                document.getElementById('exportBtn').addEventListener('click', exportResults);
+                
+                showMessage("Dashboard ready! Upload a CSV file to begin analysis.", "info");
+            }
+            
+            initializeWhenReady();
+        });
+    </script>
+
+    <!-- No PyScript - Pure JavaScript Only -->
+    <!-- This eliminates ALL import/async errors -->
+</body>
+</html>
